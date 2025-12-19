@@ -15,14 +15,12 @@ This repo studies **traffic sensor blackouts** (contiguous missing intervals) an
 - **LOCF baseline** (last observation carried forward)
 - **MAR LDS / Kalman**: linear Gaussian state‑space model with **masked observations** (missing entries are skipped)
 - **MNAR LDS (Blackouts‑as‑signal)**: same LDS + logistic missingness model  
-  \[ p(m_{t,d}=1 \mid z_t)=\sigma(\phi_d^\top z_t) \]  
+  $p(m_{t,d}=1 \mid z_t)=\sigma(\phi_d^\top z_t)$  
   Inference uses **EKF + RTS** and training uses **EM**.
 
 ### Evaluation tasks
 - **Imputation inside blackouts**: MAE / RMSE
-- **Forecast after blackout**: MAE / RMSE at **k ∈ {1,3,6}**
-- **Ablation**: MNAR with missingness channel disabled (e.g., **Φ fixed / not updated**) to quantify the value of “blackouts as signal.”
-
+- **Forecast after blackout**: MAE / RMSE at $k \in \{1,3,6\}$
 ---
 
 ## Quick start
@@ -36,7 +34,7 @@ pip install -r requirements.txt
 
 This repo currently supports two workflows:
 
-#### A) Seattle Loop 2015 (your “main” dataset)
+#### A) Seattle Loop 2015 (primary dataset)
 Place your cleaned Seattle Loop panel under `data/` in whatever filename your `data_interface.py` expects, e.g.
 ```
 data/
@@ -52,7 +50,7 @@ Then run notebooks in this order (root directory):
 6. `06_evaluation_windows.ipynb`
 
 Finally:
-- run `main.ipynb` (or `main(2).ipynb` if that’s your newer scratch/variant).
+- run `main.ipynb`.
 
 #### B) METR‑LA (synthetic evaluation windows)
 This repo includes a dedicated folder `metr_la_tests/` containing the METR‑LA conversion + synthetic evaluation‑window generation utilities.
@@ -96,7 +94,7 @@ Run:
 This notebook:
 - loads arrays from `metr_la_tests/data_metr_la/`
 - masks the chosen evaluation windows to create training data
-- trains **MAR** (Φ not updated) and **MNAR** (Φ updated) via EM
+- trains **MAR** ($\Phi$ not updated) and **MNAR** ($\Phi$ updated) via EM
 - evaluates **imputation + forecasting** on the same blackout windows
 - compares against **LOCF**
 
@@ -122,11 +120,11 @@ METR‑LA testing:
 ## Notes on the MNAR model
 
 We augment the standard LDS:
-- Dynamics: \( z_t \sim \mathcal{N}(A z_{t-1}, Q) \)
-- Emissions: \( x_t \sim \mathcal{N}(C z_t, R) \)
+- Dynamics: $z_t \sim \mathcal{N}(A z_{t-1}, Q)$
+- Emissions: $x_t \sim \mathcal{N}(C z_t, R)$
 
 with a **state‑dependent missingness mechanism**:
-- Missingness: \( p(m_{t,d}=1 \mid z_t)=\sigma(\phi_d^\top z_t) \)
+- Missingness: $p(m_{t,d}=1 \mid z_t)=\sigma(\phi_d^\top z_t)$
 
 During filtering, the model performs an EKF‑style update using:
 1) observed speed entries (standard LDS update), and  
@@ -141,16 +139,12 @@ During filtering, the model performs an EKF‑style update using:
   (length‑weighted aggregation is commonly used when windows vary in length).
 
 ### Post‑blackout forecasting
-- For each blackout end time \(b\), evaluate forecasts at horizons \(k \in \{1,3,6\}\):
-  - \(\hat{x}_{b+k} = C\,\mu_{b+k\mid b}\)
+- For each blackout end time $b$, evaluate forecasts at horizons $k \in \{1,3,6\}$:
+
+$$
+\hat{x}_{b+k} = C\ \mu_{b+k \mid b}
+$$
 - Report MAE/RMSE at each horizon.
-
----
-
-## Team
-- **Allan Ma** — literature review, model building  
-- **Aman Sunesh** — EDA, evaluation  
-- **Siddarth Nilol** — data preprocessing, report writing
 
 ---
 
